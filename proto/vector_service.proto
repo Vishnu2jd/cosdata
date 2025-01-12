@@ -1,0 +1,221 @@
+syntax = "proto3";
+
+package vector_service;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Common types
+message Vector {
+    uint64 id = 1;
+    repeated float values = 2;
+}
+
+// Auth Service
+service AuthService {
+    rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+    bool pretty_print = 3;
+}
+
+message LoginResponse {
+    string token = 1;
+    Claims claims = 2;
+}
+
+message Claims {
+    int64 exp = 1;
+    int64 iat = 2;
+    string username = 3;
+}
+
+// Collections Service
+service CollectionsService {
+    rpc CreateCollection(CreateCollectionRequest) returns (CreateCollectionResponse);
+    rpc GetCollections(GetCollectionsRequest) returns (GetCollectionsResponse);
+    rpc GetCollection(GetCollectionRequest) returns (Collection);
+    rpc DeleteCollection(DeleteCollectionRequest) returns (google.protobuf.Empty);
+}
+
+message DenseVectorOptions {
+    uint32 dimension = 1;
+}
+
+message SparseVectorOptions {
+    uint32 dimension = 1;
+}
+
+message CollectionConfig {
+    bool on_disk_payload = 1;
+}
+
+message CreateCollectionRequest {
+    string name = 1;
+    optional string description = 2;
+    DenseVectorOptions dense_vector = 3;
+    SparseVectorOptions sparse_vector = 4;
+    optional string metadata_schema = 5;
+    CollectionConfig config = 6;
+}
+
+message CreateCollectionResponse {
+    string id = 1;
+    string name = 2;
+    optional string description = 3;
+}
+
+message GetCollectionsRequest {}
+
+message GetCollectionsResponse {
+    repeated Collection collections = 1;
+}
+
+message Collection {
+    string name = 1;
+    optional string description = 2;
+}
+
+message GetCollectionRequest {
+    string id = 1;
+}
+
+message DeleteCollectionRequest {
+    string id = 1;
+}
+
+// Indexes Service
+service IndexesService {
+    rpc CreateIndex(CreateIndexRequest) returns (google.protobuf.Empty);
+}
+
+enum DataType {
+    BINARY = 0;
+    QUATERNARY = 1;
+    OCTAL = 2;
+    U8 = 3;
+    F16 = 4;
+}
+
+message ValuesRange {
+    float min = 1;
+    float max = 2;
+}
+
+message AutoQuantization {
+    uint32 sample_threshold = 1;
+}
+
+message ScalarQuantization {
+    DataType data_type = 1;
+    ValuesRange range = 2;
+}
+
+message HNSWParams {
+    optional uint32 ef_construction = 1;
+    optional uint32 ef_search = 2;
+    optional uint32 num_layers = 3;
+    optional uint64 max_cache_size = 4;
+    optional uint32 level_0_neighbors_count = 5;
+    optional uint32 neighbors_count = 6;
+}
+
+message CreateIndexRequest {
+    string collection_name = 1;
+    string name = 2;
+    string distance_metric_type = 3;
+    oneof quantization {
+        AutoQuantization auto = 4;
+        ScalarQuantization scalar = 5;
+    }
+    HNSWParams hnsw_params = 6;
+}
+
+// Transactions Service
+service TransactionsService {
+    rpc CreateTransaction(CreateTransactionRequest) returns (CreateTransactionResponse);
+    rpc CommitTransaction(TransactionRequest) returns (google.protobuf.Empty);
+    rpc AbortTransaction(TransactionRequest) returns (google.protobuf.Empty);
+    rpc CreateVectorInTransaction(CreateVectorInTransactionRequest) returns (Vector);
+    rpc DeleteVectorInTransaction(DeleteVectorInTransactionRequest) returns (google.protobuf.Empty);
+    rpc UpsertVectorsInTransaction(UpsertVectorsRequest) returns (google.protobuf.Empty);
+}
+
+message CreateTransactionRequest {
+    string collection_id = 1;
+}
+
+message CreateTransactionResponse {
+    string transaction_id = 1;
+    google.protobuf.Timestamp created_at = 2;
+}
+
+message TransactionRequest {
+    string collection_id = 1;
+    uint32 transaction_id = 2;
+}
+
+message CreateVectorInTransactionRequest {
+    string collection_id = 1;
+    uint32 transaction_id = 2;
+    Vector vector = 3;
+}
+
+message DeleteVectorInTransactionRequest {
+    string collection_id = 1;
+    uint32 transaction_id = 2;
+    uint32 vector_id = 3;
+}
+
+message UpsertVectorsRequest {
+    string collection_id = 1;
+    uint32 transaction_id = 2;
+    repeated Vector vectors = 3;
+}
+
+// Vectors Service
+service VectorsService {
+    rpc CreateVector(CreateVectorRequest) returns (Vector);
+    rpc GetVector(GetVectorRequest) returns (Vector);
+    rpc UpdateVector(UpdateVectorRequest) returns (Vector);
+    rpc DeleteVector(DeleteVectorRequest) returns (google.protobuf.Empty);
+    rpc FindSimilarVectors(FindSimilarVectorsRequest) returns (FindSimilarVectorsResponse);
+}
+
+message CreateVectorRequest {
+    string collection_id = 1;
+    Vector vector = 2;
+}
+
+message GetVectorRequest {
+    string collection_id = 1;
+    uint64 vector_id = 2;
+}
+
+message UpdateVectorRequest {
+    string collection_id = 1;
+    uint64 vector_id = 2;
+    repeated float values = 3;
+}
+
+message DeleteVectorRequest {
+    string collection_id = 1;
+    uint64 vector_id = 2;
+}
+
+message FindSimilarVectorsRequest {
+    repeated float vector = 1;
+    uint64 k = 2;
+}
+
+message SimilarVectorMatch {
+    uint64 id = 1;
+    float score = 2;
+}
+
+message FindSimilarVectorsResponse {
+    repeated SimilarVectorMatch results = 1;
+}
