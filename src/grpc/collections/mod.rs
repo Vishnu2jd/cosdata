@@ -4,6 +4,7 @@ use tonic::{Request, Response, Status};
 use crate::app_context::AppContext;
 use crate::models::collection::{Collection, DenseVectorOptions, SparseVectorOptions, CollectionConfig};
 use crate::models::common::WaCustomError;
+use crate::metadata::schema::MetadataSchema;
 
 use super::proto::collections_service_server::CollectionsService;
 use super::proto::{
@@ -43,15 +44,19 @@ impl CollectionsService for CollectionsServiceImpl {
             replication_factor: req.config.as_ref().and_then(|c| c.replication_factor.map(|v| v as i32)),
         };
 
+        // Convert metadata schema if present
+        let metadata_schema: Option<MetadataSchema> = req.metadata_schema
+            .map(|schema| schema.try_into())
+            .transpose()
+            .map_err(|e| Status::invalid_argument(format!("Invalid metadata schema: {}", e)))?;
+
         // Create new collection
         let collection = Collection::new(
             req.name.clone(),
             req.description.clone(),
             dense_vector,
             sparse_vector,
-            // @TODO: metadata_schema field is yet to be supported for
-            // grpc endpoints.
-            None,
+            metadata_schema,
             config,
         ).map_err(Status::from)?;
 

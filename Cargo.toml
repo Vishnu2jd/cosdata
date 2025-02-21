@@ -60,6 +60,7 @@ tonic = "0.12.3"
 prost = "0.13.4"
 tower = "0.5.2"
 prost-types = "0.13.4"
+tonic-reflection = "0.12.3"
 
 [dev-dependencies]
 criterion = "0.5.1"
