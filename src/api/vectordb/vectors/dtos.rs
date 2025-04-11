@@ -118,53 +118,9 @@ pub(crate) struct UpdateVectorResponseDto {
     // pub created_at: String
 }
 
-#[derive(Deserialize, Debug)]
-pub(crate) struct FindSimilarDenseVectorsDto {
-    pub vector: Vec<f32>,
-    pub k: Option<usize>,
-}
-
-#[derive(Deserialize, Debug)]
-pub(crate) struct BatchSearchDenseVectorsDto {
-    pub vectors: Vec<Vec<f32>>,
-    pub k: Option<usize>,
-}
-
-#[derive(Deserialize, Debug)]
-pub(crate) struct FindSimilarSparseVectorsDto {
-    pub values: Vec<SparsePair>,
-    pub top_k: Option<usize>,
-    pub early_terminate_threshold: Option<f32>,
-}
-
-#[derive(Deserialize, Debug)]
-pub(crate) struct BatchSearchSparseVectorsDto {
-    pub vectors: Vec<Vec<SparsePair>>,
-    pub top_k: Option<usize>,
-    pub early_terminate_threshold: Option<f32>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "lowercase", tag = "index_type")]
-pub(crate) enum FindSimilarVectorsDto {
-    Dense(FindSimilarDenseVectorsDto),
-    Sparse(FindSimilarSparseVectorsDto),
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "lowercase", tag = "index_type")]
-pub(crate) enum BatchSearchVectorsDto {
-    Dense(BatchSearchDenseVectorsDto),
-    Sparse(BatchSearchSparseVectorsDto),
-}
 
 #[derive(Serialize)]
 pub(crate) struct SimilarVector {
     pub id: VectorId,
     pub score: f32,
-}
-
-#[derive(Serialize)]
-pub(crate) struct FindSimilarVectorsResponseDto {
-    pub results: Vec<SimilarVector>,
 }

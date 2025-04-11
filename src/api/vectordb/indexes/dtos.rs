@@ -169,6 +169,9 @@ impl<'de> Deserialize<'de> for CreateSparseIndexDto {
                 let name = name.ok_or_else(|| Error::missing_field("name"))?;
 
                 if is_idf {
+                    if quantization.is_some() || sample_threshold.is_some() {
+                         return Err(Error::custom("IDF index should only have 'name' and 'isIDF' fields"));
+                    }
                     Ok(CreateSparseIndexDto::Idf { name })
                 } else {
                     Ok(CreateSparseIndexDto::Splade {
